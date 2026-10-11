@@ -139,30 +139,19 @@
   resize(); requestAnimationFrame(draw);
 })();
 </script>
-<div style="text-align:center; margin:25px auto; position:relative; z-index:10;">
-  <button id="songButton" style="background:#6b173d;color:#fff0f6;border:1px solid #ffb6d5;border-radius:25px;padding:12px 22px;font-size:15px;cursor:pointer;">
-    ♫ Play our song ♡
-  </button>
-  <audio id="bgSong" src="./song.mp3" loop preload="none"></audio>
-</div>
+<audio id="bgSong" autoplay loop playsinline>
+  <source src="./song.mp3" type="audio/mpeg">
+</audio>
 
 <script>
 const song = document.getElementById('bgSong');
-const button = document.getElementById('songButton');
 
-button.addEventListener('click', async () => {
-  if (song.paused) {
-    try {
-      await song.play();
-      button.textContent = '♫ Pause our song ♡';
-    } catch (error) {
-      button.textContent = '♫ Play our song ♡';
-      alert('Song nahi chala. Audio file ka naam aur link check karo!');
-    }
-  } else {
-    song.pause();
-    button.textContent = '♫ Play our song ♡';
-  }
+song.volume = 1;
+
+window.addEventListener('load', () => {
+  song.play().catch(() => {
+    console.log('Autoplay blocked by browser');
+  });
 });
 </script>
 </body>
