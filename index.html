@@ -156,7 +156,8 @@ button.addEventListener('click', async () => {
       await song.play();
       button.textContent = '♫ Pause our song ♡';
     } catch (error) {
-      button.textContent = '♫ Tap to play again ♡';
+      button.textContent = '♫ Play our song ♡';
+      alert('Song nahi chala. Audio file ka naam aur link check karo!');
     }
   } else {
     song.pause();
