@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#120711">
+<title>For You ❤️</title>
+<style>
+  :root { color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; overflow: hidden;
+    background: radial-gradient(ellipse at center, #321020 0%, #180914 48%, #09060d 100%);
+    color: #ffe8f0; font-family: Georgia, "Times New Roman", serif;
+    display: grid; place-items: center;
+  }
+  .wrap { width: min(100vw, 900px); padding: 18px; text-align: center; position: relative; z-index: 2; }
+  h1 { font-size: clamp(1.25rem, 4vw, 2rem); font-weight: 400; letter-spacing: .08em; margin: 0 0 4px; }
+  .sub { font: 12px/1.5 system-ui, sans-serif; color: #dba9bd; letter-spacing: .2em; text-transform: uppercase; }
+  canvas { display: block; width: 100%; max-width: 760px; height: min(72vh, 620px); margin: 0 auto; }
+  .footer { color: #c995ab; font: 12px system-ui, sans-serif; letter-spacing: .08em; margin-top: -4px; }
+  .sparkle { position: fixed; pointer-events: none; opacity: 0; animation: rise var(--dur) linear infinite; color: #ffb5cf; text-shadow: 0 0 12px #ff4f91; }
+  @keyframes rise { 0% { transform: translateY(15vh) scale(.5); opacity: 0; } 15% { opacity: .7; } 85% { opacity: .6; } 100% { transform: translateY(-110vh) scale(1.2); opacity: 0; } }
+  .signature { margin-top: 8px; color: #f4c6d7; font-size: 13px; opacity: .85; }
+  @media (max-width: 480px) { .wrap { padding: 12px 6px; } canvas { height: 68vh; } .sub { font-size: 10px; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>A little love, in every language</h1>
+  <div class="sub">20 languages · one feeling</div>
+  <canvas id="heart" aria-label="An animated heart made from I love you in twenty languages"></canvas>
+  <div class="footer">Different words. Same feeling. ❤️</div>
+  <div class="signature">Made with love, just for you.</div>
+</div>
+<script>
+(() => {
+  const canvas = document.getElementById('heart');
+  const ctx = canvas.getContext('2d');
+  const phrases = [
+    "I love you", "Te amo", "Je t’aime", "Ich liebe dich", "Ti amo",
+    "Eu te amo", "愛してる", "사랑해", "Я тебя люблю", "أحبك",
+    "मैं तुमसे प्यार करता हूँ", "मैं तुमसे प्यार करती हूँ", "Seni seviyorum",
+    "我爱你", "Ik hou van jou", "Kocham cię", "Mahal kita",
+    "Σ’ αγαπώ", "אני אוהב אותך", "Saya cinta kamu"
+  ];
+  let W, H, dpr, points = [], start = performance.now(), shimmer = [];
+  function resize() {
+    const rect = canvas.getBoundingClientRect();
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    W = rect.width; H = rect.height;
+    canvas.width = Math.round(W*dpr); canvas.height = Math.round(H*dpr);
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+    buildPoints();
+  }
+  function heart(t) {
+    return { x: 16*Math.pow(Math.sin(t),3), y: -(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t)) };
+  }
+  function inside(x,y) {
+    // Standard implicit heart: (x²+y²-1)³ - x²y³ <= 0
+    const a=x*x+y*y-1;
+    return a*a*a - x*x*y*y*y <= 0;
+  }
+  function buildPoints() {
+    points = [];
+    const scale = Math.min(W/36, H/32) * .91;
+    const cx = W/2, cy = H/2 + 2;
+    const spacing = Math.max(13, Math.min(18, W/28));
+    let row = 0;
+    for (let y=-1.35; y<=1.25; y += spacing/scale) {
+      const yy = y;
+      const maxX = Math.sqrt(Math.max(0, 1 - Math.pow(Math.abs(yy), 0.65))) * 1.45;
+      // Scanline across the parametric silhouette; test normalized points against curve.
+      for (let x=-1.5; x<=1.5; x += spacing/scale) {
+        const p = heart(Math.atan2(yy, x));
+        if (inside(x*.72, -yy*.72) || Math.abs(x) < maxX) {
+          const px = cx + x*scale*11.3;
+          const py = cy + yy*scale*11.3;
+          if (px > 10 && px < W-10 && py > 8 && py < H-8 && Math.abs(x) < 1.5) {
+            points.push({x:px, y:py, phrase:phrases[Math.floor(Math.random()*phrases.length)], size: 9 + Math.random()*3, delay: Math.random()*1800, phase: Math.random()*Math.PI*2});
+          }
+        }
+      }
+      row++;
+    }
+    // Reliable scanline shape based on the classic parametric heart curve.
+    points = [];
+    const sx = Math.min(W/36, H/34) * .95;
+    const step = 13.5;
+    for (let py = -15*sx; py <= 17*sx; py += step) {
+      const ny = -py/(16*sx);
+      let left = Infinity, right = -Infinity;
+      for (let t=0; t<Math.PI*2; t+=0.003) {
+        const p=heart(t);
+        if (Math.abs(p.y*sx-py) < step*.7) { left=Math.min(left,p.x*sx); right=Math.max(right,p.x*sx); }
+      }
+      if (left < right && right-left > 8) {
+        for(let px=left; px<=right; px+=step) {
+          points.push({x:W/2+px, y:H/2+py, phrase:phrases[Math.floor(Math.random()*phrases.length)], size:9+Math.random()*2.5, delay:Math.random()*2100, phase:Math.random()*Math.PI*2});
+        }
+      }
+    }
+    shimmer = points.filter(()=>Math.random()<.10).map(p=>({x:p.x,y:p.y,phase:Math.random()*Math.PI*2}));
+  }
+  function draw(now) {
+    ctx.clearRect(0,0,W,H);
+    const elapsed=now-start;
+    for (const p of points) {
+      const progress=Math.max(0,Math.min(1,(elapsed-p.delay)/1900));
+      const ease=1-Math.pow(1-progress,3);
+      if(progress<=0) continue;
+      const float=Math.sin(now/850+p.phase)*2.2;
+      const glow=0.55+0.45*Math.sin(now/500+p.phase);
+      ctx.save();
+      ctx.globalAlpha=ease*(.65+.35*glow);
+      ctx.font=`${p.size}px Georgia, serif`;
+      ctx.textAlign="center"; ctx.textBaseline="middle";
+      ctx.shadowBlur=5+glow*8; ctx.shadowColor=`rgba(255,65,125,${glow})`;
+      const red=Math.round(190+55*glow), green=Math.round(45+60*glow), blue=Math.round(85+80*glow);
+      ctx.fillStyle=`rgb(${red},${green},${blue})`;
+      ctx.fillText(p.phrase,p.x,p.y+float);
+      ctx.restore();
+    }
+    if(elapsed>2400) {
+      for(const s of shimmer) {
+        const a=.3+.7*(.5+.5*Math.sin(now/360+s.phase));
+        ctx.save(); ctx.globalAlpha=a; ctx.fillStyle="#fff0f7"; ctx.shadowBlur=13; ctx.shadowColor="#ff75ad";
+        ctx.beginPath(); ctx.arc(s.x,s.y,1.2+a*1.5,0,Math.PI*2); ctx.fill(); ctx.restore();
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+  for(let i=0;i<24;i++) {
+    const el=document.createElement('span'); el.className='sparkle'; el.textContent=Math.random()>.5?'✦':'·';
+    el.style.left=(Math.random()*100)+'vw'; el.style.bottom=(-10-Math.random()*30)+'px';
+    el.style.setProperty('--dur',(9+Math.random()*14)+'s'); el.style.animationDelay=(-Math.random()*20)+'s';
+    el.style.fontSize=(10+Math.random()*18)+'px'; document.body.appendChild(el);
+  }
+  window.addEventListener('resize',resize);
+  resize(); requestAnimationFrame(draw);
+})();
+</script>
+</body>
+</html>
